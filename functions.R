@@ -1,4 +1,4 @@
-
+# Function get a link for daily download of all data
 get_link<- function(start_date = Sys.Date()-7, end_date= Sys.Date()-1){
   start_date_formatted<-format(as.Date(start_date),"%d%b%Y")
   end_date_formatted<- format(as.Date(end_date), "%d%b%y")
@@ -11,6 +11,7 @@ get_link<- function(start_date = Sys.Date()-7, end_date= Sys.Date()-1){
   
 }
 
+# Function to get a link just for visits of interest
 get_voi <- function(start_date = Sys.Date()-7, end_date= Sys.Date()-1){
   start_date_formatted<-format(as.Date(start_date),"%d%b%Y")
   end_date_formatted<- format(as.Date(end_date), "%d%b%y")
@@ -19,7 +20,7 @@ get_voi <- function(start_date = Sys.Date()-7, end_date= Sys.Date()-1){
   writeClipboard(url, format = 1)
 }
 
-
+# Function to get a link just for ILI
 get_ili <- function(start_date = "2011-01-01", end_date= Sys.Date()-1){
   start_date_formatted<-format(as.Date(start_date),"%d%b%Y")
   end_date_formatted<- format(as.Date(end_date), "%d%b%y")
@@ -28,6 +29,7 @@ get_ili <- function(start_date = "2011-01-01", end_date= Sys.Date()-1){
   message("you just copied the link for ili to the clip board")
 }
 
+# Devin's awesome map robot
 make_map <- function(syndrome, color_palette = 'Purples'){
   # First, get all the data for the syndrome
   temp <- df[grepl(tolower(syndrome), tolower(df$Category_flat)),]
