@@ -1,4 +1,11 @@
 data
+gi
 ili
+neuro
+rash
+resp
 PlainDataDetailsServlet
 voi
+*.pdf
+*.RData
+*.csv
