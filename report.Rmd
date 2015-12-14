@@ -88,7 +88,7 @@ This is the ESSENCE surveillance report. There were `r nrow(df)` visits over the
 
 # Visits of Interest  
 
-There were `r nrow(voi)` visits over the past 7 days.  
+There were `r nrow(voi)` visits of interest over the past 7 days.  
 
 ```{r, results = 'asis'}
 good_columns <- c('MedRecNo', 'HospitalName', 'Age', 'Zipcode', 'Sex', 'ChiefComplaintOrig')
