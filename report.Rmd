@@ -1,0 +1,358 @@
+---
+title: "Surveillance Report"
+author: "Devin Myers"
+output:
+  pdf_document:
+    toc: true
+    highlight: zenburn
+---
+
+\vspace{15mm}
+
+\begin{Huge}
+\begin{center}
+
+`r format(Sys.Date(), '%B %d, %Y')`  
+\end{center}
+\end{Huge}
+
+\newpage
+
+Essence Report for `r format(Sys.Date(), '%B %d, %Y')`.
+
+# Introduction 
+
+
+```{r, echo=FALSE, comment=NA, message=FALSE} 
+#libraries
+library(ggplot2)
+library(dplyr)
+library(knitr)
+library(ggthemes)
+library (rgdal)
+library(RColorBrewer)
+opts_chunk$set(comment = NA, message = FALSE, echo = FALSE, results = 'hide', fig.height = 3, warnings = FALSE)
+```
+
+```{r}
+suppressWarnings(library(xtable))
+options(xtable.comment = FALSE)
+
+#Get all of our functions
+source("functions.R")
+
+#read in the essence data
+df<-read.delim("PlainDataDetailsServlet",
+               header=TRUE,
+               sep=",")
+#read in the visits of interest 
+voi<- read.delim("voi",
+               header=TRUE,
+               sep=",")
+#read in ili visits
+ili<- read.delim("ili",
+               header=TRUE,
+               sep=",")
+
+#format date 
+df$Date <- as.Date(df$Date, format = '%m/%d/%Y')
+voi$Date <- as.Date(voi$Date, format = '%m/%d/%Y')
+ili$Date <- as.Date(ili$Date, format = '%m/%d/%Y')
+
+
+# Get today's date
+today<- Sys.Date()
+
+# Get yesterday's date
+yesterday<- today-1
+
+#Get the day before yestersday date
+daybefore_yesterday <- today-2
+
+#Get Alachua Zipcodes spatial data
+zip_map <- readOGR("alachuazipcodes", "ACDPS_zipcode")
+
+#Make a new column in zip_map named zip_code
+# (make it numeric)
+zip_map@data$zip_code <- as.numeric(as.character(zip_map@data$ZIP))
+
+# Keep only real zip codes
+zip_map <- zip_map[!is.na(zip_map$zip_code),]
+
+
+
+```
+
+
+This is the ESSENCE surveillance report. There were `r nrow(df)` visits over the past 7 days.
+
+# Visits of Interest  
+
+There were `r nrow(voi)` visits over the past 7 days.  
+
+```{r, results = 'asis'}
+good_columns <- c('MedRecNo', 'HospitalName', 'Age', 'Zipcode', 'Sex', 'ChiefComplaintOrig')
+sub_voi <- voi[,good_columns]
+temp <- xtable(sub_voi)
+print(temp, size = '\\small')
+```
+
+
+# Overview  
+
+## Yesterday
+
+There were `r nrow(df[df$Date == yesterday,])` Visits yesterday.
+
+## Sex
+
+Female visits yesterday were `r nrow(df[df$Sex == 'F' & df$Date == yesterday, ])`
+
+Male visits yesterday were `r nrow(df[df$Sex == 'M' & df$Date == yesterday,])`
+
+```{r}
+ggplot(data= df, aes (x=Sex))+
+  geom_bar(fill= "blue", aplha = 0.6) +
+  theme_fivethirtyeight()+
+  ggtitle("Male and Female")
+
+```
+
+
+```{r}
+ggplot(data= df, aes (x=Sex)) +
+  geom_bar(fill = "green", alpha = 0.8) +
+  facet_grid(. ~ Date)+
+  theme_fivethirtyeight()+
+  ggtitle("Last 7 days")
+
+```
+
+```{r, fig.height= 10}
+ggplot(data= df, aes (x=Sex))+
+  geom_bar(fill = "turquoise") +
+  facet_grid(Age.Group ~ Date) +
+  theme_fivethirtyeight()+
+  ggtitle("Last 7 days M/F by Age Groups")
+
+```
+
+## Age
+
+Here is the breakdown by age.
+
+```{r,echo=FALSE} 
+ggplot(data = df, aes(x=Age))+
+  geom_histogram(fill = "salmon", alpha = 0.9) +
+  theme_fivethirtyeight() +
+  ggtitle('Visits by Age group')
+```
+
+## Sex and age
+
+
+```{r}
+ggplot(data= df, aes (x=Sex))+
+  geom_bar(fill= "lightblue", alpha = 1) +
+  facet_grid(. ~ Age.Group)+
+  theme_fivethirtyeight()+
+  
+    ggtitle("Sex by Age Group")
+
+```
+
+
+## Geography  
+
+```{r, fig.height=5} 
+by_region<- df %>%
+  filter(Date == yesterday) %>%
+  group_by(Region) %>%
+  summarise(visits =n())
+by_region <- arrange(by_region, visits)
+by_region$Region <- factor(by_region$Region, levels = by_region$Region)
+ggplot(data= by_region, aes(x=Region, y=visits))+
+  geom_bar(stat="identity", fill = 'springgreen', alpha = 0.9) +
+  theme_fivethirtyeight()+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ggtitle('Visits by County')
+
+```
+
+
+## By zip code in Alachua only
+
+```{r}
+# only take yesterday and only take alachua residents
+bza <- df %>% 
+  filter(Date == yesterday) %>%
+  filter(Region == "Alachua") %>%
+  group_by(Zipcode) %>%
+    summarise(visits = n()) %>%
+  arrange(desc(visits))
+bza$Zipcode <- factor(bza$Zipcode, levels = bza$Zipcode)
+
+ggplot(data = bza, aes(x=Zipcode, y = visits))+
+  geom_bar(stat="identity", fill= "purple", alpha = 1)+
+  theme_fivethirtyeight()+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ggtitle("Alachua County Visits by Zipcode")
+```
+
+
+## Overall number of visits
+
+```{r}
+by_date<- df%>%
+  group_by(Date)%>%
+  summarise (visits =n())
+ggplot(data= by_date, aes(x= Date, y=visits)) +
+  geom_line(color= "red")+
+  geom_smooth(color = "green", fill= "orange")+
+  theme_fivethirtyeight()+
+  ggtitle("Visits for last 7 Days")
+
+
+```
+
+
+# Syndromes  
+
+## ILI  
+
+```{r}
+#Create a Data frame for ILI
+recent_ili<- df[grepl('ILI', df$Category_flat),]
+recent_ili_by_day<- recent_ili %>%
+  group_by(Date) %>%
+  summarise(visits = n())
+
+ggplot(data = recent_ili_by_day, aes(x= Date, y= visits))+
+  geom_bar(stat = "identity", fill = "royalblue")+
+  theme_fivethirtyeight()+
+  ggtitle("ILI for last 7 days")
+```
+
+### Trends  
+
+
+
+```{r}
+temp <- ili %>%
+  group_by(Date) %>%
+  summarise(visits = n()) %>% 
+  filter(Date >= (today - 30))
+
+ggplot(data = temp, aes(x = Date, y = visits)) +
+  geom_point(color = "blue", alpha = 0.2) +
+  geom_line(color = "blue", alpha = 0.5) +
+  geom_smooth(color = "orange") +
+  ggtitle("Last 30 Days")
+```
+
+
+```{r, fig.height= 4.5}
+temp <- ili %>%
+  group_by(Date) %>%
+  summarise(visits = n())
+
+ggplot(data = temp, aes(x = Date, y = visits)) +
+  geom_point(color = "blue", alpha = 0.2) +
+  geom_line(color = "blue", alpha = 0.5) +
+  ggtitle("All Time")
+```
+
+
+### Age  
+
+```{r, warning=FALSE}
+
+#Break ILI up be time 
+ili$is_recent <- ifelse(ili$Date >= (today - 30),
+                        'Last 30 days',
+                        'More than 30 days ago')
+
+# Plot the distribution of age
+ggplot(data = ili, aes(x= Age)) +
+  geom_density(fill = "blue", color = "orange" ,alpha = 0.5) +
+  facet_grid(.~ is_recent, scales= "free_y")
+
+
+```
+
+
+## GI
+
+The Bargraph below shows gastrointestinal illnesses within the past 7 days 
+
+```{r}
+gi<- df[grepl('GI', df$Category_flat),]
+gi_by_day<- gi %>%
+  group_by(Date) %>%
+  summarise(visits = n())
+  
+ggplot(data = gi_by_day, aes(x= Date, y= visits))+
+  geom_bar(stat = "identity", fill = "orangered")+
+  theme_fivethirtyeight()+
+  ggtitle("GI last 7 days")
+
+```
+
+```{r, fig.height = 6, warning=FALSE}
+# Map
+make_map("GI","Reds")
+```
+
+## Neuro  
+
+The Bargraph below shows cases of neuro within the past 7 days
+
+```{r}
+neuro<- df[grep('Neuro', df$Category_flat),]
+neuro_by_day<- neuro %>%
+  group_by(Date) %>%
+  summarise(visits = n())
+
+ggplot(data = neuro_by_day, aes(x= Date, y= visits))+
+  geom_bar(stat = "identity", fill = "limegreen")+
+  theme_fivethirtyeight()+
+  ggtitle("Neuro Last 7 days")
+
+```
+
+```{r, fig.height = 6}
+make_map("Neuro", "Greens")
+```
+
+## Rash  
+
+The Bargraph below shows cases of rash within the past 7 days
+
+```{r}
+rash<- df[grep('Rash', df$Category_flat),]
+rash_by_day<- rash %>%
+  group_by(Date) %>%
+  summarise(visits = n())
+
+ggplot(data = rash_by_day, aes(x= Date, y= visits))+
+ geom_bar(stat = "identity", fill = "red")+ 
+ theme_fivethirtyeight()+
+  ggtitle("Rash last 7 Days")
+```
+
+
+## Respiratory  
+
+The Bargraph below shows cases of respiratory within the past 7 days 
+
+```{r}
+respiratory<- df[grep('Resp', df$Category_flat),]
+respiratory_by_day<- respiratory %>%
+  group_by(Date) %>%
+  summarise(visits = n())
+
+ggplot(data = respiratory_by_day, aes(x= Date, y= visits))+
+  geom_bar(stat = "identity", fill = "magenta")+
+  theme_fivethirtyeight()+
+  ggtitle("Respiratory last 7 days")
+```
