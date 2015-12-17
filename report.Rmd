@@ -298,10 +298,6 @@ ggplot(data = gi_by_day, aes(x= Date, y= visits))+
 
 ```
 
-```{r, fig.height = 6, warning=FALSE}
-# Map
-make_map("GI","Reds")
-```
 
 ## Neuro  
 
@@ -320,9 +316,7 @@ ggplot(data = neuro_by_day, aes(x= Date, y= visits))+
 
 ```
 
-```{r, fig.height = 6}
-make_map("Neuro", "Greens")
-```
+
 
 ## Rash  
 
@@ -355,4 +349,24 @@ ggplot(data = respiratory_by_day, aes(x= Date, y= visits))+
   geom_bar(stat = "identity", fill = "magenta")+
   theme_fivethirtyeight()+
   ggtitle("Respiratory last 7 days")
+```
+
+##Maps
+
+```{r, fig.height = 6, warning=FALSE}
+# Map
+make_map("GI","Reds")
+```
+
+```{r, fig.height = 6}
+make_map("Neuro", "Greens")
+```
+
+```{r, fig.height= 6}
+make_map("Resp", "Reds")
+
+```
+
+```{r, fig.height= 6}
+make_map("ILI", "Blues")
 ```
