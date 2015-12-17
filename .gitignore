@@ -10,3 +10,4 @@ voi
 *.RData
 *.csv
 .Rproj.user/
+.html
