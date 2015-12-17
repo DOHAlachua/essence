@@ -23,7 +23,7 @@ Essence Report for `r format(Sys.Date(), '%B %d, %Y')`.
 # Introduction 
 
 
-```{r, echo=FALSE, comment=NA, message=FALSE} 
+```{r, echo=FALSE, comment=NA, message=FALSE, warning=FALSE} 
 #libraries
 library(ggplot2)
 library(dplyr)
@@ -31,7 +31,7 @@ library(knitr)
 library(ggthemes)
 library (rgdal)
 library(RColorBrewer)
-opts_chunk$set(comment = NA, message = FALSE, echo = FALSE, results = 'hide', fig.height = 3, warnings = FALSE)
+opts_chunk$set(comment = NA, message = FALSE, echo = FALSE, results = 'hide', fig.height = 3, warning = FALSE)
 ```
 
 ```{r}
@@ -94,7 +94,7 @@ There were `r nrow(voi)` visits of interest over the past 7 days.
 good_columns <- c('MedRecNo', 'HospitalName', 'Age', 'Zipcode', 'Sex', 'ChiefComplaintOrig')
 sub_voi <- voi[,good_columns]
 temp <- xtable(sub_voi)
-print(temp, size = '\\small')
+print(temp, size = '\\tiny', include.rownames = FALSE)
 ```
 
 
@@ -111,10 +111,19 @@ Female visits yesterday were `r nrow(df[df$Sex == 'F' & df$Date == yesterday, ])
 Male visits yesterday were `r nrow(df[df$Sex == 'M' & df$Date == yesterday,])`
 
 ```{r}
-ggplot(data= df, aes (x=Sex))+
+plot1 <- 
+  ggplot(data= df, aes (x=Sex))+
   geom_bar(fill= "blue", aplha = 0.6) +
   theme_fivethirtyeight()+
-  ggtitle("Male and Female")
+  ggtitle("Last 7 Days")
+
+plot2 <- 
+  ggplot(data= df[df$Date== yesterday,], aes (x=Sex))+
+  geom_bar(fill= "blue", aplha = 0.6) +
+  theme_fivethirtyeight()+
+  ggtitle("Yesterday")
+
+multiplot(plot1, plot2, cols = 2)
 
 ```
 
@@ -124,7 +133,8 @@ ggplot(data= df, aes (x=Sex)) +
   geom_bar(fill = "green", alpha = 0.8) +
   facet_grid(. ~ Date)+
   theme_fivethirtyeight()+
-  ggtitle("Last 7 days")
+  ggtitle("Last 7 days") +
+  theme(strip.text.x = element_text(size = 8, colour = "black", angle = 0))
 
 ```
 
@@ -133,7 +143,9 @@ ggplot(data= df, aes (x=Sex))+
   geom_bar(fill = "turquoise") +
   facet_grid(Age.Group ~ Date) +
   theme_fivethirtyeight()+
-  ggtitle("Last 7 days M/F by Age Groups")
+  ggtitle("Last 7 days M/F by Age Groups") +
+  theme(strip.text.x = element_text(size = 8, colour = "black", angle = 0))
+
 
 ```
 
@@ -351,11 +363,11 @@ ggplot(data = respiratory_by_day, aes(x= Date, y= visits))+
   ggtitle("Respiratory last 7 days")
 ```
 
-##Maps
+# Maps
 
 ```{r, fig.height = 6, warning=FALSE}
 # Map
-make_map("GI","Reds")
+make_map("GI","Oranges")
 ```
 
 ```{r, fig.height = 6}
@@ -370,3 +382,7 @@ make_map("Resp", "Reds")
 ```{r, fig.height= 6}
 make_map("ILI", "Blues")
 ```
+
+# Details   
+
+Authorship, code, privacy, contact, etc...
